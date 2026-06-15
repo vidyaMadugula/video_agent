@@ -1,6 +1,8 @@
 import yt_dlp
-from pydub import AudioSegment
+# from pydub import AudioSegment
 import os
+import subprocess
+
 
 DOWNLOAD_DIR = 'downloades'
 os.makedirs(DOWNLOAD_DIR,exist_ok = True)
@@ -26,29 +28,74 @@ def download_youtube_audio(url :str) ->str:
 
 
 
-def convert_to_wav(input_path: str) -> str:
-    """Convert any audio/video file to WAV format using pydub."""
+# def convert_to_wav(input_path: str) -> str:
+#     """Convert any audio/video file to WAV format using pydub."""
+#     output_path = os.path.splitext(input_path)[0] + "_converted.wav"
+#     audio = AudioSegment.from_file(input_path)
+#     audio = audio.set_channels(1).set_frame_rate(16000) #16khz
+#     audio.export(output_path, format="wav")
+#     return output_path
+
+
+
+def convert_to_wav(input_path):
     output_path = os.path.splitext(input_path)[0] + "_converted.wav"
-    audio = AudioSegment.from_file(input_path)
-    audio = audio.set_channels(1).set_frame_rate(16000) #16khz
-    audio.export(output_path, format="wav")
+
+    subprocess.run([
+        "ffmpeg",
+        "-i", input_path,
+        "-ac", "1",
+        "-ar", "16000",
+        output_path,
+        "-y"
+    ], check=True)
+
     return output_path
 
 
 
-def chunk_audio(wav_path : str , chunk_minutes : int = 10) -> list:
-    audio = AudioSegment.from_wav(wav_path)
-    chunk_ms = chunk_minutes * 60 * 1000 
+# def chunk_audio(wav_path : str , chunk_minutes : int = 10) -> list:
+#     audio = AudioSegment.from_wav(wav_path)
+#     chunk_ms = chunk_minutes * 60 * 1000 
 
+#     chunks = []
+
+#     for i, start in enumerate(range(0,len(audio),chunk_ms)):
+#         chunk = audio[start : start + chunk_ms]
+#         chunk_path = f"{wav_path}_chunk_{i}.wav"
+#         chunk.export(chunk_path , format = "wav")
+
+#         chunks.append(chunk_path)
+    
+#     return chunks
+
+
+def chunk_audio(wav_path, chunk_minutes=10):
+    chunk_seconds = chunk_minutes * 60
+
+    output_pattern = wav_path.replace(".wav", "_chunk_%03d.wav")
+
+    subprocess.run([
+        "ffmpeg",
+        "-i", wav_path,
+        "-f", "segment",
+        "-segment_time", str(chunk_seconds),
+        "-c", "copy",
+        output_pattern,
+        "-y"
+    ], check=True)
+
+    base = wav_path.replace(".wav", "")
     chunks = []
 
-    for i, start in enumerate(range(0,len(audio),chunk_ms)):
-        chunk = audio[start : start + chunk_ms]
-        chunk_path = f"{wav_path}_chunk_{i}.wav"
-        chunk.export(chunk_path , format = "wav")
+    i = 0
+    while True:
+        path = f"{base}_chunk_{i:03d}.wav"
+        if not os.path.exists(path):
+            break
+        chunks.append(path)
+        i += 1
 
-        chunks.append(chunk_path)
-    
     return chunks
 
 def process_input(source: str) -> list:
