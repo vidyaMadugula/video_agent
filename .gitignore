@@ -1,0 +1,36 @@
+# Virtual Environment
+.venv/
+venv/
+
+# Environment Variables
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Downloaded Videos/Audio
+downloads/
+downloades/
+
+# Generated Transcripts
+*.txt
+*.srt
+*.vtt
+
+# Vector Databases
+vector_db/
+chroma_db/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
